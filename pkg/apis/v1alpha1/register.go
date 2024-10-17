@@ -16,26 +16,23 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	//nolint SA1019 - deprecated package
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-12-01/compute"
-	"github.com/aws/karpenter-core/pkg/apis/v1alpha5"
+	karpenterv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 )
-
-const ()
 
 var (
 	LabelDomain = "karpenter.k8s.azure"
 
 	// may not be able to use Regular instead of On-demand
-	PrioritySpot             = string(compute.Spot)
-	PriorityRegular          = string(compute.Regular)
+	PrioritySpot             = string(armcontainerservice.ScaleSetPrioritySpot)
+	PriorityRegular          = string(armcontainerservice.ScaleSetPriorityRegular)
 	AzureToKubeArchitectures = map[string]string{
 		// TODO: consider using constants like compute.ArchitectureArm64
-		"x64":   v1alpha5.ArchitectureAmd64,
-		"Arm64": v1alpha5.ArchitectureArm64,
+		"x64":   karpenterv1.ArchitectureAmd64,
+		"Arm64": karpenterv1.ArchitectureArm64,
 	}
 	RestrictedLabelDomains = []string{
 		LabelDomain,
@@ -112,42 +109,3 @@ var (
 		return nil
 	})
 )
-
-func init() {
-	v1alpha5.RestrictedLabelDomains = v1alpha5.RestrictedLabelDomains.Insert(RestrictedLabelDomains...)
-	v1alpha5.WellKnownLabels = v1alpha5.WellKnownLabels.Insert(
-		LabelSKUTier,
-		LabelSKUName,
-		LabelSKUSize,
-		LabelSKUSeries,
-		LabelSKUFamily,
-		LabelSKUSubfamily,
-		LabelSKUCPU,
-		LabelSKUCPUConstrained,
-		LabelSKUAccelerator,
-		LabelSKUVersion,
-
-		LabelSKUCpuTypeAmd,
-		LabelSKUStorageBlockPerformance,
-		LabelSKUConfidential,
-		LabelSKUStorageDiskful,
-		LabelSKUIsolatedSize,
-		LabelSKUMemoryLow,
-		LabelSKUMemoryIntensive,
-		LabelSKUMemoryTiny,
-		LabelSKUStoragePremiumCapable,
-
-		LabelSKUMemory,
-		LabelSKUHyperVGeneration,
-		LabelSKUAcceleratedNetworking,
-
-		LabelSKUEncryptionAtHostSupported,
-		LabelSKUEphemeralOSDiskSupported,
-		LabelSKUCachedDiskSize,
-		LabelSKUMaxResourceVolume,
-
-		LabelSKUGPUName,
-		LabelSKUGPUManufacturer,
-		LabelSKUGPUCount,
-	)
-}

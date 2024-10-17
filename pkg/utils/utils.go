@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aws/karpenter-core/pkg/cloudprovider"
+	"sigs.k8s.io/karpenter/pkg/cloudprovider"
 )
 
 // ParseAgentPoolNameFromID parses the id stored on the instance ID

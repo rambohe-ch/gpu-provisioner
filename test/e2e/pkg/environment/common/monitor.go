@@ -20,15 +20,13 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/samber/lo"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"knative.dev/pkg/logging"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/samber/lo"
-
-	"github.com/aws/karpenter-core/pkg/utils/resources"
+	"sigs.k8s.io/karpenter/pkg/utils/resources"
 )
 
 // Monitor is used to monitor the cluster state during a running test

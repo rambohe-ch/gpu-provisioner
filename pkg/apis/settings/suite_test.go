@@ -19,12 +19,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/azure/gpu-provisioner/pkg/apis/settings"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	. "knative.dev/pkg/logging/testing"
-
-	"github.com/azure/gpu-provisioner/pkg/apis/settings"
 )
 
 var ctx context.Context

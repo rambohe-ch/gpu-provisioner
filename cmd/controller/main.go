@@ -16,37 +16,29 @@ limitations under the License.
 package main
 
 import (
-	"github.com/samber/lo"
-
 	"github.com/azure/gpu-provisioner/pkg/cloudprovider"
 	"github.com/azure/gpu-provisioner/pkg/operator"
-
-	"github.com/aws/karpenter-core/pkg/cloudprovider/metrics"
-	corecontrollers "github.com/aws/karpenter-core/pkg/controllers"
-	"github.com/aws/karpenter-core/pkg/controllers/state"
-	coreoperator "github.com/aws/karpenter-core/pkg/operator"
+	"sigs.k8s.io/karpenter/pkg/cloudprovider/metrics"
+	corecontrollers "sigs.k8s.io/karpenter/pkg/controllers"
+	coreoperator "sigs.k8s.io/karpenter/pkg/operator"
 )
 
 func main() {
 	ctx, op := operator.NewOperator(coreoperator.NewOperator())
 	azureCloudProvider := cloudprovider.New(
-		op.InstanceTypesProvider,
 		op.InstanceProvider,
 		op.GetClient(),
 	)
 
-	lo.Must0(op.AddHealthzCheck("cloud-provider", azureCloudProvider.LivenessProbe))
+	// lo.Must0(op.AddHealthzCheck("cloud-provider", azureCloudProvider.LivenessProbe))
 	cloudProvider := metrics.Decorate(azureCloudProvider)
 
-	op.
-		WithControllers(ctx, corecontrollers.NewControllers(
-			ctx,
-			op.Clock,
-			op.GetClient(),
-			op.KubernetesInterface,
-			state.NewCluster(op.Clock, op.GetClient(), cloudProvider),
-			op.EventRecorder,
-			cloudProvider,
-		)...).
-		Start(ctx)
+	op.WithControllers(ctx, corecontrollers.NewControllers(
+		ctx,
+		op.Manager,
+		op.Clock,
+		op.GetClient(),
+		op.EventRecorder,
+		cloudProvider,
+	)...).Start(ctx, cloudProvider)
 }

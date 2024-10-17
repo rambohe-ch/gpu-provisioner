@@ -19,15 +19,10 @@ package apis
 import (
 	_ "embed"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/aws/karpenter-core/pkg/operator/scheme"
-
-	"github.com/samber/lo"
-
-	coresettings "github.com/aws/karpenter-core/pkg/apis/settings"
-	"github.com/azure/gpu-provisioner/pkg/apis/settings"
 	"github.com/azure/gpu-provisioner/pkg/apis/v1alpha1"
+	"github.com/samber/lo"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 var (
@@ -37,7 +32,7 @@ var (
 	)
 	// AddToScheme may be used to add all resources defined in the project to a Scheme
 	AddToScheme = Builder.AddToScheme
-	Settings    = []coresettings.Injectable{&settings.Settings{}}
+	// Settings    = []coresettings.Injectable{&settings.Settings{}}
 )
 
 //go:generate controller-gen crd object:headerFile="../../hack/boilerplate.go.txt" paths="./..." output:crd:artifacts:config=crds

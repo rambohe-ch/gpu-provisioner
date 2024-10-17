@@ -19,23 +19,34 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
-	"github.com/aws/karpenter-core/pkg/apis/v1alpha5"
+	"github.com/samber/lo"
 	v1 "k8s.io/api/core/v1"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	karpenterv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 )
 
-func GetMachineObj(name string, labels map[string]string, taints []v1.Taint, resource v1alpha5.ResourceRequirements, req []v1.NodeSelectorRequirement) *v1alpha5.Machine {
-	return &v1alpha5.Machine{
-		ObjectMeta: v12.ObjectMeta{
+func GetNodeClaimObj(name string, labels map[string]string, taints []v1.Taint, resource karpenterv1.ResourceRequirements, req []v1.NodeSelectorRequirement) *karpenterv1.NodeClaim {
+	requirements := lo.Map(req, func(v1Requirements v1.NodeSelectorRequirement, _ int) karpenterv1.NodeSelectorRequirementWithMinValues {
+		return karpenterv1.NodeSelectorRequirementWithMinValues{
+			NodeSelectorRequirement: v1.NodeSelectorRequirement{
+				Key:      v1Requirements.Key,
+				Operator: v1Requirements.Operator,
+				Values:   v1Requirements.Values,
+			},
+			MinValues: to.Ptr(int(1)),
+		}
+	})
+	return &karpenterv1.NodeClaim{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: "machine-ns",
+			Namespace: "nodeclaim-ns",
 			Labels:    labels,
 		},
-		Spec: v1alpha5.MachineSpec{
-			Resources:          resource,
-			Requirements:       req,
-			MachineTemplateRef: &v1alpha5.MachineTemplateRef{},
-			Taints:             taints,
+		Spec: karpenterv1.NodeClaimSpec{
+			Resources:    resource,
+			Requirements: requirements,
+			NodeClassRef: &karpenterv1.NodeClassReference{},
+			Taints:       taints,
 		},
 	}
 }
@@ -76,7 +87,7 @@ func GetNodeList(nodes []v1.Node) *v1.NodeList {
 
 var (
 	ReadyNode = v1.Node{
-		ObjectMeta: v12.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "aks-agentpool0-20562481-vmss_0",
 			Labels: map[string]string{
 				"agentpool":                      "agentpool0",

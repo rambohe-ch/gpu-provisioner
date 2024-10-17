@@ -18,39 +18,45 @@ package cloudprovider
 import (
 	"context"
 
-	"github.com/aws/karpenter-core/pkg/apis/v1alpha5"
 	"github.com/azure/gpu-provisioner/pkg/providers/instance"
 	"github.com/samber/lo"
 	"knative.dev/pkg/logging"
+	karpenterv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 )
 
-func (c *CloudProvider) instanceToMachine(ctx context.Context, instanceObj *instance.Instance) *v1alpha5.Machine {
-	machine := &v1alpha5.Machine{}
+func (c *CloudProvider) instanceToNodeClaim(ctx context.Context, instanceObj *instance.Instance) *karpenterv1.NodeClaim {
+	nodeClaim := &karpenterv1.NodeClaim{}
+	if instanceObj == nil {
+		return nodeClaim
+	}
+
 	labels := instanceObj.Labels
 	annotations := map[string]string{}
 
-	machine.Name = lo.FromPtr(instanceObj.Name)
+	nodeClaim.Name = lo.FromPtr(instanceObj.Name)
 
 	if instanceObj.CapacityType != nil {
-		labels[v1alpha5.LabelCapacityType] = *instanceObj.CapacityType
+		labels[karpenterv1.CapacityTypeLabelKey] = *instanceObj.CapacityType
 	}
 
-	if v, ok := instanceObj.Tags[v1alpha5.ProvisionerNameLabelKey]; ok {
-		labels[v1alpha5.ProvisionerNameLabelKey] = *v
-	}
-	if v, ok := instanceObj.Tags[v1alpha5.MachineManagedByAnnotationKey]; ok {
-		annotations[v1alpha5.MachineManagedByAnnotationKey] = *v
+	if instanceObj != nil && instanceObj.Tags[karpenterv1.NodePoolLabelKey] != nil {
+		labels[karpenterv1.NodePoolLabelKey] = *instanceObj.Tags[karpenterv1.NodePoolLabelKey]
 	}
 
-	machine.Labels = labels
-	machine.Annotations = annotations
+	if instanceObj != nil && instanceObj.Tags[karpenterv1.NodeClassReferenceAnnotationKey] != nil {
+		annotations[karpenterv1.NodeClassReferenceAnnotationKey] = *instanceObj.Tags[karpenterv1.NodeClassReferenceAnnotationKey]
+	}
+
+	nodeClaim.Labels = labels
+	nodeClaim.Annotations = annotations
 
 	if instanceObj != nil && instanceObj.ID != nil {
-		machine.Status.ProviderID = lo.FromPtr(instanceObj.ID)
-		annotations[v1alpha5.MachineLinkedAnnotationKey] = lo.FromPtr(instanceObj.ID)
+		nodeClaim.Status.ProviderID = lo.FromPtr(instanceObj.ID)
+		annotations[karpenterv1.NodeClassReferenceAnnotationKey] = lo.FromPtr(instanceObj.ID)
 	} else {
 		logging.FromContext(ctx).Warnf("Provider ID cannot be nil")
 	}
+	nodeClaim.Status.ImageID = *instanceObj.ImageID
 
-	return machine
+	return nodeClaim
 }
